@@ -1,0 +1,13 @@
+
+if I want to add a trampoline thing I can:
+	make my own instruction length disassembler
+	or just rewrite the overwritten bytes every time
+		I can't really do this because of race conditions
+	or pull a full disassembler with me into the kernel
+	or make a userspace daemon just for length disassembling
+
+So maybe just get the syscall_table, and overwrite that
+	For now I look in userspace before inserting the node with /boot/System.map
+	Or I could find a reference to it maybe? That would be nice
+		maybe at arch_syscall_addr
+	Or I could do a bruteforce search
