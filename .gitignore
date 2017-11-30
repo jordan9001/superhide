@@ -1,0 +1,8 @@
+*.ko
+*.o
+modules.order
+Module.symvers
+*.mod.*
+sysgen.h
+*.cmd
+.tmp_versions
